@@ -32,9 +32,9 @@ CLASSES = ('__background__',
            'tampered')
 
 # PLEASE specify weight files dir for vgg16
-NETS = {'vgg16': ('vgg16_faster_rcnn_iter_30000.ckpt',), 'res101': ('res101_faster_rcnn_iter_110000.ckpt',)}
+NETS = {'vgg16': ('vgg16_faster_rcnn_iter_40000.ckpt',), 'res101': ('res101_faster_rcnn_iter_110000.ckpt',)}
 DATASETS = {'pascal_voc': ('voc_2007_trainval',), 'pascal_voc_0712': ('voc_2007_trainval+voc_2012_trainval',)}
-
+count = 1
 
 def vis_detections(im, class_name, dets, thresh=0.5):
     """Draw detected bounding boxes."""
@@ -66,6 +66,10 @@ def vis_detections(im, class_name, dets, thresh=0.5):
                  fontsize=14)
     plt.axis('off')
     plt.tight_layout()
+    # save detected image
+    global count
+    fig.savefig("./resulting_images/{}.png".format(count))
+    count += 1
     plt.draw()
 
 
@@ -108,11 +112,9 @@ def parse_args():
     args = parser.parse_args()
 
     return args
-
-
+	
 if __name__ == '__main__':
     args = parse_args()
-
     # model path
     demonet = args.demo_net
     dataset = args.dataset
