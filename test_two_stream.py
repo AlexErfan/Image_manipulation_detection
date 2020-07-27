@@ -25,6 +25,7 @@ from lib.config import config as cfg
 from lib.utils.nms_wrapper import nms
 from lib.utils.test import im_detect
 from lib.utils.test import test_net
+from lib.datasets.factory import get_imdb
 #from nets.resnet_v1 import resnetv1
 from lib.nets.vgg16 import vgg16
 from lib.utils.timer import Timer
@@ -109,7 +110,7 @@ def parse_args():
     parser.add_argument('--net', dest='demo_net', help='Network to use [vgg16 res101]',
                         choices=NETS.keys(), default='vgg16')
     parser.add_argument('--dataset', dest='dataset', help='Trained dataset [pascal_voc pascal_voc_0712]',
-                        choices=DATASETS.keys(), default='pascal_voc_0712')
+                        choices=DATASETS.keys(), default='pascal_voc')
     args = parser.parse_args()
 
     return args
@@ -119,6 +120,7 @@ if __name__ == '__main__':
     # model path
     demonet = args.demo_net
     dataset = args.dataset
+    imdb = get_imdb('DIY_dataset')
     tfmodel = os.path.join('default', 'DIY_dataset', 'default', NETS[demonet][0])
 
     if not os.path.isfile(tfmodel + '.meta'):
@@ -139,10 +141,11 @@ if __name__ == '__main__':
         # net = resnetv1(batch_size=1, num_layers=101)
     else:
         raise NotImplementedError
-    net.create_architecture(sess, "TEST", 2,
+
+    net.create_architecture(sess, "TEST", imdb.num_classes,
                             tag='default', anchor_scales=[8, 16, 32])
     saver = tf.train.Saver()
-    saver.restosre(sess, tfmodel)
+    saver.restore(sess, tfmodel)
 
     print('Loaded network {:s}'.format(tfmodel))
 
@@ -154,6 +157,6 @@ if __name__ == '__main__':
 
     # plt.show()
 
-    test_net(sess, net, imdb, filename, max_per_image=args.max_per_image)
+    test_net(sess, net, imdb, demonet, max_per_image=100)
 
 sess.close()

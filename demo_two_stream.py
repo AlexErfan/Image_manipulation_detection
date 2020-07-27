@@ -141,7 +141,7 @@ if __name__ == '__main__':
     net.create_architecture(sess, "TEST", 2,
                             tag='default', anchor_scales=[8, 16, 32])
     saver = tf.train.Saver()
-    saver.restosre(sess, tfmodel)
+    saver.restore(sess, tfmodel)
 
     print('Loaded network {:s}'.format(tfmodel))
 
