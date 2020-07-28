@@ -138,7 +138,7 @@ def voc_eval(detpath,
         bbox = np.array([x['bbox'] for x in R])
         # difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
         det = [False] * len(R)
-        npos = npos + sum(~difficult)
+        # npos = npos + sum(~difficult)
         class_recs[imagename] = {'bbox': bbox,
                                 #  'difficult': difficult,
                                  'det': det}
