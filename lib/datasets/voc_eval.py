@@ -22,9 +22,9 @@ def parse_rec(filename):
     for obj in tree.findall('object'):
         obj_struct = {}
         obj_struct['name'] = obj.find('name').text
-        # obj_struct['pose'] = obj.find('pose').text
-        # obj_struct['truncated'] = int(obj.find('truncated').text)
-        # obj_struct['difficult'] = int(obj.find('difficult').text)
+        #obj_struct['pose'] = obj.find('pose').text
+        #obj_struct['truncated'] = int(obj.find('truncated').text)
+        #obj_struct['difficult'] = int(obj.find('difficult').text)
         bbox = obj.find('bndbox')
         obj_struct['bbox'] = [int(bbox.find('xmin').text),
                               int(bbox.find('ymin').text),
@@ -33,6 +33,7 @@ def parse_rec(filename):
         objects.append(obj_struct)
 
     return objects
+
 
 
 def voc_ap(rec, prec, use_07_metric=False):
@@ -118,10 +119,10 @@ def voc_eval(detpath,
             if i % 100 == 0:
                 print('Reading annotation for {:d}/{:d}'.format(
                     i + 1, len(imagenames)))
-        # save
-        print('Saving cached annotations to {:s}'.format(cachefile))
-        with open(cachefile, 'wb') as f:
-            pickle.dump(recs, f)
+        ## save
+        #print('Saving cached annotations to {:s}'.format(cachefile))
+        #with open(cachefile, 'wb') as f:
+        #    pickle.dump(recs, f)
     else:
         # load
         with open(cachefile, 'rb') as f:
@@ -133,14 +134,16 @@ def voc_eval(detpath,
     # extract gt objects for this class
     class_recs = {}
     npos = 0
+    # extract tampered class objects per image
     for imagename in imagenames:
         R = [obj for obj in recs[imagename] if obj['name'] == classname]
         bbox = np.array([x['bbox'] for x in R])
-        # difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
+        #difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
         det = [False] * len(R)
-        # npos = npos + sum(~difficult)
+        #npos = npos + sum(~difficult)
+        npos = npos + 1
         class_recs[imagename] = {'bbox': bbox,
-                                #  'difficult': difficult,
+                                 #'difficult': difficult,
                                  'det': det}
 
     # read dets
@@ -152,6 +155,7 @@ def voc_eval(detpath,
     image_ids = [x[0] for x in splitlines]
     confidence = np.array([float(x[1]) for x in splitlines])
     BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
+    print('BB {}'.format(BB))
 
     nd = len(image_ids)
     tp = np.zeros(nd)
@@ -170,6 +174,7 @@ def voc_eval(detpath,
             bb = BB[d, :].astype(float)
             ovmax = -np.inf
             BBGT = R['bbox'].astype(float)
+            print("bb {} BBGT {}".format(bb, BBGT))
 
             if BBGT.size > 0:
                 # compute overlaps
@@ -200,23 +205,25 @@ def voc_eval(detpath,
             else:
                 fp[d] = 1.
 
-            # if ovmax > ovthresh:
-            #     if not R['difficult'][jmax]:
-            #         if not R['det'][jmax]:
-            #             tp[d] = 1.
-            #             R['det'][jmax] = 1
-            #         else:
-            #             fp[d] = 1.
-            # else:
-            #     fp[d] = 1.
+            #if ovmax > ovthresh:
+            #    if not R['difficult'][jmax]:
+            #        if not R['det'][jmax]:
+            #            tp[d] = 1.
+            #            R['det'][jmax] = 1
+            #        else:
+            #            fp[d] = 1.
+            #else:
+            #    fp[d] = 1.
 
     # compute precision recall
     fp = np.cumsum(fp)
     tp = np.cumsum(tp)
     rec = tp / float(npos)
+    print("Number of positives:{:d}".format(npos))
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
+    print("recall {} precision {}".format(rec, prec))
     ap = voc_ap(rec, prec, use_07_metric)
 
     return rec, prec, ap

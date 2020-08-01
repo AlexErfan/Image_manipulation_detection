@@ -18,7 +18,6 @@ except ImportError:
     import pickle
 import os
 
-os.environ['CUDA_VISIBLE_DEVICES']='0,1'
 
 def get_training_roidb(imdb):
     """Returns a roidb (Region of Interest database) for use in training."""

@@ -77,7 +77,7 @@ def demo(sess, net, image_name):
     """Detect object classes in an image using pre-computed object proposals."""
 
     # Load the demo image
-    im_file = os.path.join('lib/layer_utils', image_name)
+    im_file = os.path.join('data/DIY_dataset/VOC2007/JPEGImages', image_name)
     im = cv2.imread(im_file)
 
     # Detect all object classes and regress object bounds
@@ -99,6 +99,7 @@ def demo(sess, net, image_name):
                           cls_scores[:, np.newaxis])).astype(np.float32)
         keep = nms(dets, NMS_THRESH)
         dets = dets[keep, :]
+        print("det: {}".format(dets))
         vis_detections(im, cls, dets, thresh=CONF_THRESH)
 
 
@@ -145,10 +146,15 @@ if __name__ == '__main__':
 
     print('Loaded network {:s}'.format(tfmodel))
 
-    for file in os.listdir("./lib/layer_utils"):
+    #for file in os.listdir("./lib/layer_utils"):
+    #    if file.endswith(".jpg"):
+    #        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    #        print('Demo for lib/layer_utils/{}'.format(file))
+    #        demo(sess, net, file)
+
+    for file in os.listdir("./data/DIY_dataset/VOC2007/JPEGImages"):
         if file.endswith(".jpg"):
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            print('Demo for lib/layer_utils/{}'.format(file))
+            print('demo for{}'.format(file))
             demo(sess, net, file)
-
     plt.show()

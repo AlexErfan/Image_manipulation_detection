@@ -72,6 +72,7 @@ def modify_xml(filename, savefile, xmin, ymin, xmax, ymax):
         root.remove(obj)
     new_obj = Element('object', {})
     new_obj.append(create_node('name', {}, 'tampered'))
+    #new_obj.append(create_node('difficult', {}, str(0)))
     bndbox = Element('bndbox', {})
     bndbox.append(create_node('xmin', {}, str(xmin)))
     bndbox.append(create_node('ymin', {}, str(ymin)))
