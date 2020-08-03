@@ -369,6 +369,7 @@ class Network(object):
                                                                             self._losses['total_loss'],
                                                                             train_op],
                                                                            feed_dict=feed_dict)
+        # print("out of sess run")
         return rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, loss
 
     def train_step_with_summary(self, sess, blobs, train_op):

@@ -40,6 +40,11 @@ for year in ['2007']:
         name = 'DIY_dataset'
         __sets[name] = (lambda split=split, year=year: DIY_pascal_voc(split, year))
 
+coco_path='/csai02/scyew1/RGB-N/coco_synthetic/'
+for split in ['coco_train_filter', 'coco_test_filter']:
+    name = split
+    __sets[name] = (lambda split=split: coco(split,2007,coco_path))
+
 
 def get_imdb(name):
     """Get an imdb (image database) by name."""

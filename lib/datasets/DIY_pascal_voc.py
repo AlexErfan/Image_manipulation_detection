@@ -27,7 +27,7 @@ class DIY_pascal_voc(imdb):
         imdb.__init__(self, 'DIY_dataset')
         self._year = year
         self._image_set = image_set
-        self._devkit_path = 'data/DIY_dataset'
+        self._devkit_path = 'data/DIY_dataset/test'
         self._data_path = os.path.join(self._devkit_path, 'VOC' + '2007')
         self._classes = ('__background__',  # always index 0
                          'tampered')

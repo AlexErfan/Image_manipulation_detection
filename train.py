@@ -19,6 +19,8 @@ except ImportError:
 import os
 
 
+os.environ["CUDA_VISIBLE_DEVICES"] = '0,1'
+
 def get_training_roidb(imdb):
     """Returns a roidb (Region of Interest database) for use in training."""
     if True:
@@ -55,6 +57,8 @@ def combined_roidb(imdb_names):
         imdb = imdb2(imdb_names, tmp.classes)
     else:
         imdb = get_imdb(imdb_names)
+
+    #print("roidb: {}".format(roidb))
     return imdb, roidb
 
 
@@ -67,7 +71,7 @@ class Train:
         else:
             raise NotImplementedError
 
-        self.imdb, self.roidb = combined_roidb("DIY_dataset")
+        self.imdb, self.roidb = combined_roidb("coco_train_filter")
 
         self.data_layer = RoIDataLayer(self.roidb, self.imdb.num_classes)
         self.output_dir = cfg.get_output_dir(self.imdb, 'default')
@@ -144,6 +148,7 @@ class Train:
             if iter == cfg.FLAGS.step_size + 1:
                 # Add snapshot here before reducing the learning rate
                 # self.snapshot(sess, iter)
+                print("1")
                 sess.run(tf.assign(lr, cfg.FLAGS.learning_rate * cfg.FLAGS.gamma))
 
             timer.tic()
@@ -152,6 +157,7 @@ class Train:
             iter += 1
             # Compute the graph without summary
             if iter % 100 == 0:
+                print("2")
                 rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, total_loss, summary = self.net.train_step_with_summary(
                     sess, blobs, train_op)
                 timer.toc()
@@ -160,11 +166,13 @@ class Train:
                 writer.add_run_metadata(run_metadata, 'step%03d' % iter)
                 writer.add_summary(summary, iter)
             else:
+                print("2")
                 rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, total_loss = self.net.train_step(
                     sess, blobs, train_op)
                 timer.toc()
-
+            print("3")
             # Display training information
+            print("num of iter {}".format(iter))
             if iter % (cfg.FLAGS.display) == 0:
                 print('iter: %d / %d, total loss: %.6f\n >>> rpn_loss_cls: %.6f\n '
                       '>>> rpn_loss_box: %.6f\n >>> loss_cls: %.6f\n >>> loss_box: %.6f\n ' % \

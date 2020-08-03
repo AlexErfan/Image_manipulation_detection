@@ -49,6 +49,7 @@ def get_minibatch(roidb, num_classes):
         [[im_blob.shape[1], im_blob.shape[2], im_scales[0]]],
         dtype=np.float32)
 
+    # print("gt_boxes: {}".format(roidb[0]))
     return blobs
 
 

@@ -46,6 +46,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride, all_anch
 
     # overlaps between the anchors and the gt boxes
     # overlaps (ex, gt)
+    # print ('gt_boxes: {}, ahcnors: {}, img_info {}, indices {}'.format(gt_boxes, anchors, im_info, len(inds_inside)))
     overlaps = bbox_overlaps(
         np.ascontiguousarray(anchors, dtype=np.float),
         np.ascontiguousarray(gt_boxes, dtype=np.float))
