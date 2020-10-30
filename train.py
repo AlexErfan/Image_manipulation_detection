@@ -10,6 +10,7 @@ from lib.datasets.factory import get_imdb
 from lib.datasets.imdb import imdb as imdb2
 from lib.layer_utils.roi_data_layer import RoIDataLayer
 from lib.nets.vgg16 import vgg16
+#from lib.nets.resnet_v1 import resnetv1
 from lib.utils.timer import Timer
 
 try:
@@ -68,6 +69,8 @@ class Train:
         # Create network
         if cfg.FLAGS.net == 'vgg16':
             self.net = vgg16(batch_size=cfg.FLAGS.ims_per_batch)
+        #elif cfg.FLAGS.net == 'resnet':
+        #    self.net = resnetv1(batch_size=cfg.FLAGS.ims_per_batch) 
         else:
             raise NotImplementedError
 
@@ -94,7 +97,7 @@ class Train:
             optimizer = tf.train.MomentumOptimizer(lr, momentum)
 
             gvs = optimizer.compute_gradients(loss)
-
+            print("loss {}".format(loss))
             # Double bias
             # Double the gradient of the bias if set
             if cfg.FLAGS.double_bias:
@@ -157,20 +160,27 @@ class Train:
             iter += 1
             # Compute the graph without summary
             if iter % 100 == 0:
-                print("2")
-                rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, total_loss, summary = self.net.train_step_with_summary(
-                    sess, blobs, train_op)
+                
+                try:
+                    rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, total_loss, summary = self.net.train_step_with_summary(
+                        sess, blobs, train_op)
+                except Exception:
+                    print("image invalid (train step with summary), skiping")
+                    continue
                 timer.toc()
-
+                
                 run_metadata = tf.RunMetadata()
                 writer.add_run_metadata(run_metadata, 'step%03d' % iter)
                 writer.add_summary(summary, iter)
             else:
-                print("2")
-                rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, total_loss = self.net.train_step(
-                    sess, blobs, train_op)
+                try:    
+                    rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, total_loss = self.net.train_step(
+                        sess, blobs, train_op)
+                except Exception:
+                    print("image invalid (train step without summary), skipping")
+                    continue
                 timer.toc()
-            print("3")
+            
             # Display training information
             print("num of iter {}".format(iter))
             if iter % (cfg.FLAGS.display) == 0:

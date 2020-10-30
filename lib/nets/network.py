@@ -243,7 +243,10 @@ class Network(object):
             bbox_targets = self._proposal_targets['bbox_targets']
             bbox_inside_weights = self._proposal_targets['bbox_inside_weights']
             bbox_outside_weights = self._proposal_targets['bbox_outside_weights']
-
+            
+            # print("bbox_targets  {}".format(bbox_targets) )
+            # print("bbox_inside_weights {}".format(bbox_inside_weights))
+            # print("bbox_outside_weights {}".format(bbox_outside_weights))
             loss_box = self._smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights)
 
             self._losses['cross_entropy'] = cross_entropy
@@ -362,6 +365,7 @@ class Network(object):
     def train_step(self, sess, blobs, train_op):
         feed_dict = {self._image: blobs['data'], self._im_info: blobs['im_info'],
                      self._gt_boxes: blobs['gt_boxes']}
+        # print("im_info len: {}".format(blobs['im_info']))
         rpn_loss_cls, rpn_loss_box, loss_cls, loss_box, loss, _ = sess.run([self._losses["rpn_cross_entropy"],
                                                                             self._losses['rpn_loss_box'],
                                                                             self._losses['cross_entropy'],

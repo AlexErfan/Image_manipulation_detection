@@ -1,7 +1,8 @@
 # --------------------------------------------------------
-# Tensorflow RGB-N
+# Fast R-CNN
+# Copyright (c) 2015 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
-# Written by Peng Zhou, based on the code of Xinlei Chen
+# Written by Peng Zhou
 # --------------------------------------------------------
 from __future__ import absolute_import
 from __future__ import division
@@ -17,29 +18,29 @@ import lib.utils.cython_bbox
 import pickle
 import subprocess
 import uuid
+import pdb
 from .voc_eval import voc_eval
-from lib.config import config as cfg
+from lib.config import config as cfg 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-
-class coco(imdb):
+class dist_fake(imdb):
   def __init__(self, image_set, year, dist_path=None):
     imdb.__init__(self, image_set)
     self._year = year
-    self._image_set = image_set.split('coco_')[1]
+    self._image_set = image_set.split('dist_')[1]
     self._dist_path = self._get_default_path() if dist_path is None \
                             else dist_path
     self._data_path=self._dist_path
-    #self._data_path = os.path.join(self._dist_path, image_set)
-    # self._classes = ('__background__',  # always index 0
-    #                  'tamper','authentic')
     self._classes = ('__background__',  # always index 0
-                     'tamper')
+                     'tamper','authentic')
+    self._classes = ('authentic',  # always index 0
+                    'tamper')
+    #self.classes =('authentic',  # always index 0
+                    #'splicing','removal')
     self._class_to_ind = dict(list(zip(self.classes, list(range(self.num_classes)))))
-    #self._image_ext = {'.jpg','.tif'}
-    self._image_ext = {'.png'}
+    self._image_ext = {'.png','.jpg','.tif','.bmp','.JPG'}
     self._image_index = self._load_image_set_index()
     # Default to roidb handler
     self._roidb_handler = self.gt_roidb
@@ -62,9 +63,8 @@ class coco(imdb):
                               #index + ext)
       image_path = os.path.join(self._data_path,
                               index + ext)
-      image_path1=os.path.join('../dataset/train2014',
+      image_path1=os.path.join('/home-3/pengzhou@umd.edu/work/pengzhou/dataset/NC2016_Test0613',
                               index + ext)
-      # print("The image path is {}".format(image_path))
       if os.path.isfile(image_path):
         return image_path
       elif os.path.isfile(image_path1):
@@ -87,15 +87,14 @@ class coco(imdb):
       'Path does not exist: {}'.format(image_set_file)
     with open(image_set_file) as f:
       image_index = [x.strip() for x in f.readlines()]
+    #print(image_index)
     return image_index
 
   def _get_default_path(self):
     """
     Return the default path where PASCAL VOC is expected to be installed.
     """
-    #return os.path.join(cfg.DATA_DIR, 'CASIA2')
-    return os.path.join(cfg.DATA_DIR, 'cocostuff/coco/splicing')
-
+    return os.path.join(cfg.DATA_DIR, 'NC2016_Test0613')
 
   def gt_roidb(self):
     """
@@ -131,7 +130,8 @@ class coco(imdb):
 
     return roidb
   def roidb_gt(self,image_id):
-    num_objs = int(len(image_id.split(' ')[1:])/4)
+    num_objs = int(len(image_id.split(' ')[1:])/5)
+
     boxes = np.zeros((num_objs, 4), dtype=np.uint16)
     gt_classes = np.zeros((num_objs), dtype=np.int32)
     overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)
@@ -140,38 +140,36 @@ class coco(imdb):
 
     # Load object bounding boxes into a data frame.
     for ix in range(num_objs):
-      # print("ix {}".format(ix))
       bbox = image_id.split(' ')[ix*5+1:ix*5+5]
-      print("bbox and ix {}".format(bbox))
       # Make pixel indexes 0-based
-      x1 = float(bbox[0]) -1
-      y1 = float(bbox[1]) -1
-      x2 = float(bbox[2]) -1
-      y2 = float(bbox[3]) -1
+      x1 = float(bbox[0]) 
+      y1 = float(bbox[1]) 
+      x2 = float(bbox[2]) 
+      y2 = float(bbox[3])
       if x1<0:
         x1=0
       if y1<0:
-        y1=0
-      # print("class to ind {}".format(self._class_to_ind))
-      #try:
-      #  cls=self._class_to_ind[image_id.split(' ')[ix*5+5]]
-      #except:
-      #  cls = int(image_id.split(' ')[ix*5+5])
-      cls = 1
+        y1=0 
+      try:
+        cls=self._class_to_ind[image_id.split(' ')[ix*5+5]]
+      except:
+        if int(image_id.split(' ')[ix*5+5])==0:
+          print('authentic')
+          cls=2
+        else:
+          cls = int(image_id.split(' ')[ix*5+5])
       boxes[ix, :] = [x1, y1, x2, y2]
       gt_classes[ix] = cls
       overlaps[ix, cls] = 1.0
       seg_areas[ix] = (x2 - x1 ) * (y2 - y1)
-    # print(image_id)
-    # print(boxes)
-    # print("num of objects {}".format(num_objs))
+
     overlaps = scipy.sparse.csr_matrix(overlaps)
 
     return {'boxes': boxes,
             'gt_classes': gt_classes,
             'gt_overlaps': overlaps,
             'flipped': False,
-            'JPGed': False,
+            'JPGed':False,
             'noised':False,
             'seg_areas': seg_areas}
 
@@ -237,7 +235,7 @@ class coco(imdb):
 
   def _get_voc_results_file_template(self):
     # VOCdevkit/results/VOC2007/Main/<comp_id>_det_test_aeroplane.txt
-    filename = 'coco_' + self._image_set + '_{:s}.txt'
+    filename = 'nist_' + self._image_set + '_{:s}.txt'
     path = os.path.join(
       '.',
       filename)
@@ -245,7 +243,7 @@ class coco(imdb):
 
   def _get_voc_noise_results_file_template(self):
     # VOCdevkit/results/VOC2007/Main/<comp_id>_det_test_aeroplane.txt
-    filename = 'coco_' + self._image_set + '_{:s}_noise.txt'
+    filename = 'nist_' + self._image_set + '_{:s}_noise.txt'
     path = os.path.join(
       '.',
       filename)
@@ -255,22 +253,21 @@ class coco(imdb):
     for cls_ind, cls in enumerate(self.classes):
       if cls == '__background__':
         continue
-      print('Writing {} det results file'.format(cls))
+      print('Writing {} VOC results file'.format(cls))
       filename = self._get_voc_results_file_template().format(cls)
       print(filename)
-      with open(filename, 'wt') as f:
+      with open(filename, 'w') as f:
         for im_ind, index in enumerate(self.image_index):
           dets = all_boxes[cls_ind][im_ind]
-          #print(dets)
-          #print(index)
           if dets == []:
             continue
           # the VOCdevkit expects 1-based indices
           for k in range(dets.shape[0]):
-            f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.
-                    format(index.split(' ')[0], dets[k, -1],
+            #pdb.set_trace()
+            f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.format(index.split(' ')[0], dets[k, -1],
                            dets[k, 0] + 1, dets[k, 1] + 1,
                            dets[k, 2] + 1, dets[k, 3] + 1))
+          #pdb.set_trace()
 
   def _do_python_eval(self, output_dir='output'):
     annopath = os.path.join(
@@ -299,14 +296,11 @@ class coco(imdb):
         #cls_ind=3
         #continue
       filename = self._get_voc_results_file_template().format(cls)
-      #filename2 = self._get_voc_noise_results_file_template().format(cls)
-      #print(cls_ind)
-      # rec, prec, ap = voc_eval(
-      #   filename,filename2, annopath, imagesetfile, cls_ind, cachedir, ovthresh=0.5,
-      #   use_07_metric=use_07_metric,fuse=False)
+      filename2 = self._get_voc_noise_results_file_template().format(cls)
+      print(cls_ind)
       rec, prec, ap = voc_eval(
-        filename, annopath, imagesetfile, self._classes[cls_ind], cachedir, ovthresh=0.5,
-        use_07_metric=use_07_metric)
+        filename,filename2, annopath, imagesetfile, cls_ind, cachedir, ovthresh=0.5,
+        use_07_metric=use_07_metric,fuse=False)
       aps += [ap]
       print(('AP for {} = {:.4f},recall = {:.4f}, precision = {:.4f}'.format(cls, ap,rec[-1],prec[-1])))
       with open(os.path.join(output_dir, cls + '_pr.pkl'), 'wb') as f:
@@ -318,7 +312,7 @@ class coco(imdb):
       plt.xlim((0,1.0))
       plt.ylim((0,1.0))
       plt.ylabel('precision',fontsize=15)
-      fig.savefig('{}.png'.format(cls))
+      fig.savefig('{}.jpg'.format(cls))
 
     print(('Mean AP = {:.4f}'.format(np.mean(aps))))
     print('~~~~~~~~')
@@ -344,8 +338,8 @@ class coco(imdb):
     cmd = 'cd {} && '.format(path)
     cmd += '{:s} -nodisplay -nodesktop '.format(cfg.MATLAB)
     cmd += '-r "dbstop if error; '
-    cmd += 'voc_eval(\'{:s}\',\'{:s}\',\'{:s}\'); quit;"' \
-      .format(self._dist_path,
+    cmd += 'voc_eval(\'{:s}\',\'{:s}\',\'{:s}\',\'{:s}\'); quit;"' \
+      .format(self._devkit_path, self._get_comp_id(),
               self._image_set, output_dir)
     print(('Running:\n{}'.format(cmd)))
     status = subprocess.call(cmd, shell=True)
@@ -355,12 +349,12 @@ class coco(imdb):
     self._do_python_eval(output_dir)
     #if self.config['matlab_eval']:
       #self._do_matlab_eval(output_dir)
-    # if self.config['cleanup']:
-    #   for cls in self._classes:
-    #     if cls == '__background__' or cls == self.classes[0]:
-    #       continue
-    #     filename = self._get_voc_results_file_template().format(cls)
-    #     #os.remove(filename)
+    if self.config['cleanup']:
+      for cls in self._classes:
+        if cls == '__background__':
+          continue
+        filename = self._get_voc_results_file_template().format(cls)
+        #os.remove(filename)
 
   def competition_mode(self, on):
     if on:
@@ -372,9 +366,9 @@ class coco(imdb):
 
 
 if __name__ == '__main__':
-  from datasets.coco import coco
+  from datasets.dist_fake import dist_fake
 
-  d = coco('train', '2007')
+  d = dist_fake('trainval', '2007')
   res = d.roidb
   from IPython import embed;
 

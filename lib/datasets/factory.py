@@ -14,6 +14,7 @@ __sets = {}
 from lib.datasets.pascal_voc import pascal_voc
 from lib.datasets.coco import coco
 from lib.datasets.DIY_pascal_voc import DIY_pascal_voc
+from lib.datasets.dist_fake import dist_fake
 
 import numpy as np
 
@@ -45,6 +46,10 @@ for split in ['coco_train_filter', 'coco_test_filter']:
     name = split
     __sets[name] = (lambda split=split: coco(split,2007,coco_path))
 
+dso_path='/csai02/scyew1/COVERAGE'
+for split in ['dist_cover_train_single', 'dist_cover_test_single']:
+    name = split
+    __sets[name] = (lambda split=split: dist_fake(split,2007,dso_path))
 
 def get_imdb(name):
     """Get an imdb (image database) by name."""

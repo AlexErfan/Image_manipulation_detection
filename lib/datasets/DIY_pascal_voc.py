@@ -27,7 +27,7 @@ class DIY_pascal_voc(imdb):
         imdb.__init__(self, 'DIY_dataset')
         self._year = year
         self._image_set = image_set
-        self._devkit_path = 'data/DIY_dataset/test'
+        self._devkit_path = 'data/DIY_dataset/train'
         self._data_path = os.path.join(self._devkit_path, 'VOC' + '2007')
         self._classes = ('__background__',  # always index 0
                          'tampered')
@@ -158,7 +158,7 @@ class DIY_pascal_voc(imdb):
             seg_areas[ix] = (x2 - x1 + 1) * (y2 - y1 + 1)
 
         overlaps = scipy.sparse.csr_matrix(overlaps)
-
+        
         return {'boxes': boxes,
                 'gt_classes': gt_classes,
                 'gt_overlaps': overlaps,

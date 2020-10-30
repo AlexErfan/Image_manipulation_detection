@@ -12,13 +12,14 @@ from lib.datasets.xml_op import *
 import xml.etree.ElementTree as ET
 from shutil import copyfile
 
-DATASET_SIZE = 5011
+DATASET_SIZE = 82784 
 
 dataset_path = os.sep.join(['data', 'VOCdevkit2007', 'VOC2007'])
+
 images_path = os.sep.join([dataset_path, 'JPEGImages'])
 image_annotation_path = os.sep.join([dataset_path, 'Annotations'])
 
-save_path = os.sep.join(['data', 'DIY_dataset', 'VOC2007'])
+save_path = os.sep.join(['data', 'COCO_VOC', 'VOC2007'])
 save_imgage_path = os.sep.join([save_path, 'JPEGImages'])
 save_annotation_path = os.sep.join([save_path, 'Annotations'])
 

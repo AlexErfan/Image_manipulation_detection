@@ -10,6 +10,7 @@ from __future__ import print_function
 import os
 import pickle
 import xml.etree.ElementTree as ET
+import pdb
 
 import numpy as np
 
@@ -35,6 +36,42 @@ def parse_rec(filename):
     return objects
 
 
+def parse_txt(fileline,classname):
+  #classes=('__background__','person_au','person_tp','airplane_tp','airplane_au','dog_tp','dog_au',
+      #'train_tp','train_au','bed_tp','bed_au','refrigerator_tp','refrigerator_au')
+  #classes=('__background__','person_au','person_tp','tv_tp','tv_au','airplane_tp','airplane_au','dog_tp','dog_au',
+      #'bench_tp','bench_au','train_tp','train_au','broccoli_tp','broccoli_au','kite_tp','kite_au','bed_tp','bed_au','refrigerator_tp','refrigerator_au','bowl_tp','bowl_au')
+  classes=('__background__', 'tamper','authentic')
+  classes=('authentic', 'tamper')
+  #classes=('__background__',  # always index 0
+                     #'splicing','removal','manipulation')
+  #classes=('__background__','person_au','tv_au','airplane_au','dog_au',
+      #'bench_au','train_au','broccoli_au','kite_au','bed_au','refrigerator_au','bowl_au')
+  class_to_ind = dict(list(zip(classes, list(range(len(classes))))))
+  num_objs = int(len(fileline.split(' ')[1:])/4)
+  objects=[]
+  obj={}
+  #print(fileline.split())
+#   pdb.set_trace()
+  #object['name']=fileline.split(" ")[0]
+  for i in range(num_objs):
+    obj['bbox']=[float(fileline.split(' ')[5*i+1]),
+                  float(fileline.split(' ')[5*i+2]),
+                  float(fileline.split(' ')[5*i+3]),
+                  float(fileline.split(' ')[5*i+4])]
+    obj['cls'] = 'tamper'
+    # try:
+    #   obj['cls']=class_to_ind[fileline.split(' ')[5*i+5]]
+    # except:
+    #   #pdb.set_trace()
+    #   obj['cls']=int(fileline.split(' ')[5*i+5])
+    #obj['bbox']=[int(fileline.split(' ')[(classname-1)*5+1]),
+                    #int(fileline.split(' ')[(classname-1)*5+2]),
+                    #int(fileline.split(' ')[(classname-1)*5+3]),
+                    #int(fileline.split(' ')[(classname-1)*5+4])]
+    #obj['cls']=int(fileline.split(' ')[(classname-1)*5+5])
+    objects.append(obj.copy())
+  return objects
 
 def voc_ap(rec, prec, use_07_metric=False):
     """ ap = voc_ap(rec, prec, [use_07_metric])
@@ -115,7 +152,9 @@ def voc_eval(detpath,
         # load annots
         recs = {}
         for i, imagename in enumerate(imagenames):
-            recs[imagename] = parse_rec(annopath.format(imagename))
+            #recs[imagename] = parse_rec(annopath.format(imagename))
+            name = imagename.split(' ')[0]
+            recs[name] = parse_txt(imagename, classname)
             if i % 100 == 0:
                 print('Reading annotation for {:d}/{:d}'.format(
                     i + 1, len(imagenames)))
@@ -136,15 +175,18 @@ def voc_eval(detpath,
     npos = 0
     # extract tampered class objects per image
     for imagename in imagenames:
-        R = [obj for obj in recs[imagename] if obj['name'] == classname]
+        #R = [obj for obj in recs[imagename] if obj['name'] == classname]
+        name = imagename.split(' ')[0]
+        R = [obj for obj in recs[name] if obj['cls'] == classname]
         bbox = np.array([x['bbox'] for x in R])
         #difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
         det = [False] * len(R)
         #npos = npos + sum(~difficult)
         npos = npos + 1
-        class_recs[imagename] = {'bbox': bbox,
+        class_recs[name] = {'bbox': bbox,
                                  #'difficult': difficult,
                                  'det': det}
+    pdb.set_trace()
 
     # read dets
     detfile = detpath.format(classname)
@@ -168,6 +210,7 @@ def voc_eval(detpath,
         BB = BB[sorted_ind, :]
         image_ids = [image_ids[x] for x in sorted_ind]
 
+        # pdb.set_trace() 
         # go down dets and mark TPs and FPs
         for d in range(nd):
             R = class_recs[image_ids[d]]
